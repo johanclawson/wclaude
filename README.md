@@ -3,7 +3,7 @@
 [![npm version](https://badge.fury.io/js/wclaude.svg)](https://www.npmjs.com/package/wclaude)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A production-ready Windows wrapper for [Claude Code v2.0.57](https://docs.anthropic.com/en/docs/claude-code) that auto-approves tool calls much faster than shell-based hooks. Instead of prompting for each action, it uses a configurable [`blocklist.js`](blocklist.js) that by default only blocks commands causing Windows-specific crashes and timeouts (see [Cygpath errors](#cygpath-errors) for an example).
+A production-ready Windows wrapper for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) that auto-approves tool calls just as fast as `--dangerously-skip-permissions` but with a configurable [`blocklist.js`](blocklist.js) to block dangerous commands. Features **Windows toast notifications** when user input is needed, and **Ctrl+Break to unfreeze** stuck sessions without losing your conversation.
 
 > ⚠️ **Important:** Using the wclaude wrapper is similar to running Claude Code with `--dangerously-skip-permissions`. **You are responsible for reviewing Claude's actions.** We take no responsibility for outcomes when running Claude Code this way.
 >
