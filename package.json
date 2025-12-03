@@ -1,0 +1,56 @@
+{
+  "name": "wclaude",
+  "version": "1.0.0",
+  "description": "Windows wrapper for Claude Code with EPERM crash fix and Git Bash integration",
+  "main": "runner.js",
+  "bin": {
+    "wclaude": "runner.js"
+  },
+  "type": "module",
+  "files": [
+    "runner.js",
+    "blocklist.js",
+    "assets/"
+  ],
+  "scripts": {
+    "start": "node runner.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "debug": "node runner.js --windebug"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "anthropic",
+    "windows",
+    "cli",
+    "ai",
+    "assistant"
+  ],
+  "author": "Johan (based on work by somersby10ml and aaronvstory)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/johanclawson/wclaude.git"
+  },
+  "homepage": "https://github.com/johanclawson/wclaude#readme",
+  "bugs": {
+    "url": "https://github.com/johanclawson/wclaude/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "os": [
+    "win32"
+  ],
+  "peerDependencies": {
+    "@anthropic-ai/claude-code": "*"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "node-notifier": "^10.0.1"
+  }
+}

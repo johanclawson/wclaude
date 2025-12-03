@@ -1,0 +1,47 @@
+Windows Registry Editor Version 5.00
+
+; Claude Code Windows - Right-click Context Menu Integration
+;
+; INSTRUCTIONS:
+; 1. Edit the paths below to match your installation location
+; 2. Double-click this file and confirm the registry modification
+; 3. Right-click any folder to see "Open with Claude Code" option
+;
+; Default paths assume: C:\Users\%USERNAME%\repos\claude-code-win-v2\launchers\
+
+; ============================================
+; Folder Context Menu (right-click on folder)
+; ============================================
+
+[HKEY_CLASSES_ROOT\Directory\shell\ClaudeCode]
+@="Open with Claude Code"
+"Icon"="%SystemRoot%\\System32\\imageres.dll,190"
+
+[HKEY_CLASSES_ROOT\Directory\shell\ClaudeCode\command]
+@="powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\Users\\%USERNAME%\\repos\\claude-code-win-v2\\launchers\\claude-code-launcher.ps1\" \"%V\""
+
+; Continue session option
+[HKEY_CLASSES_ROOT\Directory\shell\ClaudeCodeContinue]
+@="Continue with Claude Code"
+"Icon"="%SystemRoot%\\System32\\imageres.dll,191"
+
+[HKEY_CLASSES_ROOT\Directory\shell\ClaudeCodeContinue\command]
+@="powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\Users\\%USERNAME%\\repos\\claude-code-win-v2\\launchers\\claude-code-launcher.ps1\" \"%V\" --continue"
+
+; ============================================
+; Background Context Menu (right-click in empty space)
+; ============================================
+
+[HKEY_CLASSES_ROOT\Directory\Background\shell\ClaudeCode]
+@="Open with Claude Code"
+"Icon"="%SystemRoot%\\System32\\imageres.dll,190"
+
+[HKEY_CLASSES_ROOT\Directory\Background\shell\ClaudeCode\command]
+@="powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\Users\\%USERNAME%\\repos\\claude-code-win-v2\\launchers\\claude-code-launcher.ps1\" \"%V\""
+
+[HKEY_CLASSES_ROOT\Directory\Background\shell\ClaudeCodeContinue]
+@="Continue with Claude Code"
+"Icon"="%SystemRoot%\\System32\\imageres.dll,191"
+
+[HKEY_CLASSES_ROOT\Directory\Background\shell\ClaudeCodeContinue\command]
+@="powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\Users\\%USERNAME%\\repos\\claude-code-win-v2\\launchers\\claude-code-launcher.ps1\" \"%V\" --continue"
