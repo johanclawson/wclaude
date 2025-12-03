@@ -1,6 +1,6 @@
 {
   "name": "wclaude",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Windows wrapper for Claude Code with EPERM crash fix and Git Bash integration",
   "main": "runner.js",
   "bin": {
