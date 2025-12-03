@@ -1,12 +1,12 @@
 <#
 .SYNOPSIS
-    Installs claude-code-win-v2 and its dependencies
+    Installs wclaude and its dependencies
 
 .DESCRIPTION
     This script:
     1. Checks for Node.js and npm
     2. Installs @anthropic-ai/claude-code globally
-    3. Links claude-code-win-v2 globally
+    3. Links wclaude globally
     4. Optionally installs context menu integration
 
 .PARAMETER SkipContextMenu
@@ -25,7 +25,7 @@ $ErrorActionPreference = "Stop"
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  claude-code-win-v2 Installer" -ForegroundColor Cyan
+Write-Host "  wclaude Installer" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -89,10 +89,10 @@ catch {
 Write-Host ""
 
 # ============================================
-# Link claude-code-win-v2
+# Link wclaude
 # ============================================
 
-Write-Host "Linking claude-code-win-v2..." -ForegroundColor Yellow
+Write-Host "Linking wclaude..." -ForegroundColor Yellow
 
 # Get the script's directory (installer folder)
 $installerDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -103,11 +103,11 @@ try {
     Push-Location $repoRoot
     npm link
     Pop-Location
-    Write-Host "  claude-code-win-v2 linked successfully" -ForegroundColor Green
+    Write-Host "  wclaude linked successfully" -ForegroundColor Green
 }
 catch {
     Pop-Location
-    Write-Host "ERROR: Failed to link claude-code-win-v2" -ForegroundColor Red
+    Write-Host "ERROR: Failed to link wclaude" -ForegroundColor Red
     Write-Host $_.Exception.Message -ForegroundColor Red
     exit 1
 }
@@ -142,7 +142,7 @@ if (-not $SkipContextMenu) {
             $escapedPath = $launcherPath.Replace('\', '\\')
 
             # Replace placeholder paths
-            $content = $content -replace 'C:\\\\Users\\\\%USERNAME%\\\\repos\\\\claude-code-win-v2\\\\launchers\\\\claude-code-launcher.ps1', $escapedPath
+            $content = $content -replace 'C:\\\\Users\\\\%USERNAME%\\\\repos\\\\wclaude\\\\launchers\\\\claude-code-launcher.ps1', $escapedPath
 
             # Create temp reg file with actual paths
             $tempReg = Join-Path $env:TEMP "claude-code-context-menu.reg"
@@ -215,7 +215,7 @@ Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "You can now run Claude Code using:" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  claude-code-win-v2" -ForegroundColor White
+Write-Host "  wclaude" -ForegroundColor White
 Write-Host ""
 Write-Host "Or use the launcher script for extra features:" -ForegroundColor Cyan
 Write-Host ""

@@ -1,5 +1,5 @@
 /**
- * Jest configuration for claude-code-win-v2
+ * Jest configuration for wclaude
  *
  * Uses ES Modules with experimental VM modules support.
  * Run tests with: npm test

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * claude-code-win-v2 - Windows wrapper for Claude Code
+ * wclaude - Windows wrapper for Claude Code
  *
  * Based on win-claude-code by somersby10ml (MIT License)
  * Enhanced with:
@@ -64,7 +64,7 @@ const DEBUG_LOG_PATH = DEBUG_MODE ? path.join(os.homedir(), '.claude', 'debug.lo
 if (DEBUG_LOG_PATH) {
   try {
     const timestamp = new Date().toISOString();
-    fs.writeFileSync(DEBUG_LOG_PATH, `\n=== claude-code-win-v2 debug log started at ${timestamp} ===\n`, { flag: 'a' });
+    fs.writeFileSync(DEBUG_LOG_PATH, `\n=== wclaude debug log started at ${timestamp} ===\n`, { flag: 'a' });
   } catch (e) {
     // Ignore - debug logging is best-effort
   }
@@ -275,11 +275,11 @@ function setupSignalHandlers() {
   const killChildren = (signal) => {
     const count = childProcesses.size;
     if (count === 0) {
-      originalConsole.log(`\n[claude-code-win-v2] ${signal} - no child processes to kill`);
+      originalConsole.log(`\n[wclaude] ${signal} - no child processes to kill`);
       return;
     }
 
-    originalConsole.log(`\n[claude-code-win-v2] ${signal} - killing ${count} child process(es)...`);
+    originalConsole.log(`\n[wclaude] ${signal} - killing ${count} child process(es)...`);
 
     for (const child of childProcesses) {
       if (child.pid) {
@@ -298,7 +298,7 @@ function setupSignalHandlers() {
 
   // Full cleanup and exit
   const cleanupAndExit = (signal) => {
-    originalConsole.log(`\n[claude-code-win-v2] Received ${signal}, shutting down...`);
+    originalConsole.log(`\n[wclaude] Received ${signal}, shutting down...`);
     killChildren(signal);
 
     // Force exit after a short delay
@@ -507,7 +507,7 @@ let networkRetryCount = 0;
       const distro = wslMatch[2];
       const wslPath = wslMatch[3].replace(/\\/g, '/') || '/';
 
-      originalConsole.log(`[claude-code-win-v2] WSL path detected, launching in ${distro}: ${wslPath}`);
+      originalConsole.log(`[wclaude] WSL path detected, launching in ${distro}: ${wslPath}`);
 
       const result = spawnSync('wsl', ['-d', distro, '--cd', wslPath, '--', 'claude'], {
         stdio: 'inherit'
@@ -550,14 +550,14 @@ let networkRetryCount = 0;
       );
 
       originalConsole.warn(
-        `[claude-code-win-v2] No internet connection. ` +
+        `[wclaude] No internet connection. ` +
         `Retry ${networkRetryCount}/${CONFIG.MAX_NETWORK_RETRIES} in ${backoffMs / 1000}s...`
       );
 
       await new Promise(r => setTimeout(r, backoffMs));
 
       if (await checkConnectivity()) {
-        originalConsole.log('[claude-code-win-v2] Connection restored!');
+        originalConsole.log('[wclaude] Connection restored!');
         networkRetryCount = 0; // Reset for next disconnection
         return true;
       }
@@ -580,14 +580,14 @@ let networkRetryCount = 0;
 
         // Check if this is a network error
         if (isNetworkError(err)) {
-          originalConsole.warn('[claude-code-win-v2] Network error detected:', err.message);
+          originalConsole.warn('[wclaude] Network error detected:', err.message);
 
           // Wait for connectivity to be restored
           const connected = await waitForConnectivity();
 
           if (!connected) {
             originalConsole.error(
-              `[claude-code-win-v2] No internet after ${CONFIG.MAX_NETWORK_RETRIES} retries. Stopping.`
+              `[wclaude] No internet after ${CONFIG.MAX_NETWORK_RETRIES} retries. Stopping.`
             );
             process.exit(1);
           }
@@ -606,14 +606,14 @@ let networkRetryCount = 0;
 
         if (crashRestartCount >= CONFIG.MAX_CRASH_RESTARTS) {
           originalConsole.error(
-            `[claude-code-win-v2] Crashed ${CONFIG.MAX_CRASH_RESTARTS} times in ${CONFIG.CRASH_WINDOW_MS / 1000}s. Stopping.`
+            `[wclaude] Crashed ${CONFIG.MAX_CRASH_RESTARTS} times in ${CONFIG.CRASH_WINDOW_MS / 1000}s. Stopping.`
           );
-          originalConsole.error('[claude-code-win-v2] Error:', err.message);
+          originalConsole.error('[wclaude] Error:', err.message);
           process.exit(1);
         }
 
         originalConsole.warn(
-          `[claude-code-win-v2] Crashed. Restarting... (${crashRestartCount}/${CONFIG.MAX_CRASH_RESTARTS})`
+          `[wclaude] Crashed. Restarting... (${crashRestartCount}/${CONFIG.MAX_CRASH_RESTARTS})`
         );
 
         // Small delay before restart to prevent CPU thrashing
@@ -643,9 +643,9 @@ let networkRetryCount = 0;
 
     gitBashPath = findGitBashPath();
     if (!gitBashPath) {
-      originalConsole.warn('[claude-code-win-v2] Git Bash not found - Unix commands (grep, find, awk, sed) will not be available');
-      originalConsole.warn('[claude-code-win-v2] To enable Unix commands, install Git for Windows: https://git-scm.com/download/win');
-      originalConsole.warn('[claude-code-win-v2] After installation, restart your terminal and run again');
+      originalConsole.warn('[wclaude] Git Bash not found - Unix commands (grep, find, awk, sed) will not be available');
+      originalConsole.warn('[wclaude] To enable Unix commands, install Git for Windows: https://git-scm.com/download/win');
+      originalConsole.warn('[wclaude] After installation, restart your terminal and run again');
     }
     logger.debug('Git Bash:', gitBashPath || 'not found');
 
@@ -821,7 +821,7 @@ let networkRetryCount = 0;
 
           return child;
         } catch (error) {
-          originalConsole.error('[claude-code-win-v2] spawn error:', error);
+          originalConsole.error('[wclaude] spawn error:', error);
           throw error;
         }
       };
@@ -838,7 +838,7 @@ let networkRetryCount = 0;
           global.spawn = spawnHook;
         }
       } catch (e) {
-        originalConsole.warn('[claude-code-win-v2] Could not hook spawn function:', e.message);
+        originalConsole.warn('[wclaude] Could not hook spawn function:', e.message);
       }
     }
 

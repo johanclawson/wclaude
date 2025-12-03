@@ -1,4 +1,4 @@
-// blocklist.js - Command validation rules for claude-code-win-v2
+// blocklist.js - Command validation rules for wclaude
 //
 // This file defines patterns that block potentially dangerous or
 // crash-inducing commands before they execute.

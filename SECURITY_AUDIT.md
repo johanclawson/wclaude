@@ -1,6 +1,6 @@
 # Security Audit
 
-This document provides a comprehensive security analysis of claude-code-win-v2.
+This document provides a comprehensive security analysis of wclaude.
 
 ## Executive Summary
 
@@ -10,7 +10,7 @@ This wrapper only hooks Node.js functions for Windows compatibility. It does not
 - Make HTTP/HTTPS calls (only DNS lookup for connectivity check - see below)
 - Exfiltrate data
 - Access credentials (only reads user-configured tokens from registry)
-- Modify system files (only creates `~/.claude/mcp_modules` directory)
+- Modify system files (only creates junction at `~/.mcp-modules`)
 - Install persistent services
 
 **Note on Network:** The only network operation is a DNS lookup to `api.anthropic.com` to check internet connectivity before retrying after network errors. This does not send any data.
@@ -59,13 +59,14 @@ process.env[token] = match[1].trim();
 #### Setup 4: `setupMcpModules()`
 
 ```javascript
-fs.mkdirSync(path.join(os.homedir(), '.claude', 'mcp_modules'), { recursive: true });
-process.env.MCP_MODULES_PATH = mcpDir;
+// Creates junction: ~/.mcp-modules/node_modules/@anthropic-ai/claude-code
+//                → npm global @anthropic-ai/claude-code
+fs.symlinkSync(target, linkPath, 'junction');
 ```
 
-**Purpose:** Creates MCP modules directory and sets environment variable.
+**Purpose:** Creates Windows directory junction so MCP servers can find Claude Code modules.
 
-**Risk:** Low. Creates directory in user's home folder only.
+**Risk:** Low. Creates junction in user's home folder only. Never deletes existing content.
 
 #### Setup 5: `handleWslPath()`
 
@@ -159,7 +160,7 @@ The wrapper hooks 5 Node.js functions:
 
 ### Runtime Dependencies
 
-**None.** This package has zero npm dependencies.
+- `node-notifier`: Used for Windows toast notifications when user input is required. This is a well-maintained package with no network capabilities.
 
 ### Peer Dependencies
 
@@ -168,7 +169,7 @@ The wrapper hooks 5 Node.js functions:
 ## Data Flow
 
 ```
-User runs claude-code-win-v2
+User runs wclaude
          │
          ▼
     Setup functions run
@@ -211,7 +212,7 @@ All actual API communication is handled by the official `@anthropic-ai/claude-co
 
 This wrapper:
 - **Reads:** npm global root location, Git installation path, Windows Registry (tokens)
-- **Writes:** Creates `~/.claude/mcp_modules` directory only
+- **Writes:** Creates junction at `~/.mcp-modules/node_modules/@anthropic-ai/claude-code` only
 - **Executes:** `npm root -g`, `reg query`, `taskkill`, `wsl` (all Windows/system commands)
 
 ## Verification Steps
@@ -238,7 +239,7 @@ grep -r "http\|fetch\|request\|writeFile" runner.js
 | Environment setup | Sets MSYS_NO_PATHCONV, NODE_OPTIONS | None |
 | Git PATH fix | Prefers Program Files Git | None |
 | Token loading | Reads from Windows Registry | Low |
-| MCP directory | Creates ~/.claude/mcp_modules | Low |
+| MCP junction | Creates ~/.mcp-modules junction | Low |
 | WSL detection | Redirects to WSL | Low |
 | Auto-restart | Restarts on crash (max 3/min) | None |
 | Network retry | DNS lookup for connectivity check | Low |
@@ -250,10 +251,10 @@ grep -r "http\|fetch\|request\|writeFile" runner.js
 This wrapper is safe to use. It:
 - Only hooks necessary functions for Windows compatibility
 - Uses standard Windows tools (taskkill, reg query, wsl)
-- Has no dependencies that could be compromised
+- Uses only one dependency (node-notifier) for toast notifications
 - Only makes DNS lookups for connectivity checking (no HTTP/data transfer)
 - Only reads user-configured tokens from registry
-- Creates one directory in user's home folder
+- Creates one junction in user's home folder
 
 The code is fully auditable and all functionality is documented.
 

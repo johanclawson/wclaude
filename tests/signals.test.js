@@ -9,7 +9,7 @@
  *   1. Run: node runner.js --windebug
  *   2. Press Ctrl+C
  *   3. Check ~/.claude/debug.log for: "Signal handlers installed (SIGINT, SIGTERM, SIGHUP)"
- *   4. Verify console shows: "[claude-code-win-v2] Received SIGINT, shutting down..."
+ *   4. Verify console shows: "[wclaude] Received SIGINT, shutting down..."
  */
 
 import { CONFIG, calculateBackoff } from '../runner.js';
@@ -97,7 +97,7 @@ describe('Documentation of expected signal behavior', () => {
   test('SIGINT (Ctrl+C) should trigger cleanup', () => {
     // Expected behavior:
     // 1. All tracked child processes are killed with taskkill /T /F
-    // 2. Message is logged: "[claude-code-win-v2] Received SIGINT, shutting down..."
+    // 2. Message is logged: "[wclaude] Received SIGINT, shutting down..."
     // 3. Process exits with code 0
     expect(true).toBe(true); // Documentation test
   });

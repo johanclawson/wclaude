@@ -12,7 +12,7 @@
 
 .NOTES
     Based on claude-code-windows-setup by aaronvstory
-    Enhanced for claude-code-win-v2
+    Enhanced for wclaude
 
 .PARAMETER FolderPath
     Optional path to open Claude Code in a specific directory
@@ -116,27 +116,10 @@ if ($FolderPath -match '^\\\\wsl') {
 }
 
 # ============================================
-# MCP Module Junction Setup
+# MCP Module Setup
 # ============================================
-
-# Create junction for Claude Code MCP module to avoid admin privileges
-# This helps when Claude Code tries to access node_modules in protected locations
-
-$claudeDataDir = Join-Path $env:USERPROFILE ".claude"
-$mcpModulesDir = Join-Path $claudeDataDir "mcp_modules"
-
-if (-not (Test-Path $mcpModulesDir)) {
-    try {
-        New-Item -ItemType Directory -Path $mcpModulesDir -Force | Out-Null
-        Write-Host "[Launcher] Created MCP modules directory: $mcpModulesDir" -ForegroundColor Gray
-    }
-    catch {
-        Write-Host "[Launcher] Warning: Could not create MCP modules directory" -ForegroundColor Yellow
-    }
-}
-
-# Set MCP_MODULES_PATH environment variable for Claude Code
-$env:MCP_MODULES_PATH = $mcpModulesDir
+# Note: MCP junction is now handled automatically by wclaude (runner.js)
+# It creates: ~/.mcp-modules/node_modules/@anthropic-ai/claude-code -> npm global install
 
 # ============================================
 # Working Directory
@@ -151,17 +134,17 @@ if ($FolderPath -and (Test-Path $FolderPath -PathType Container)) {
 # Check Prerequisites
 # ============================================
 
-$claudeCommand = Get-Command "claude-code-win-v2" -ErrorAction SilentlyContinue
+$claudeCommand = Get-Command "wclaude" -ErrorAction SilentlyContinue
 if (-not $claudeCommand) {
     Write-Host ""
-    Write-Host "ERROR: claude-code-win-v2 is not installed or not in PATH" -ForegroundColor Red
+    Write-Host "ERROR: wclaude is not installed or not in PATH" -ForegroundColor Red
     Write-Host ""
     Write-Host "To install:" -ForegroundColor Yellow
     Write-Host "  1. npm install -g @anthropic-ai/claude-code --ignore-scripts" -ForegroundColor White
-    Write-Host "  2. npm install -g claude-code-win-v2" -ForegroundColor White
+    Write-Host "  2. npm install -g wclaude" -ForegroundColor White
     Write-Host ""
     Write-Host "Or if running from local repo:" -ForegroundColor Yellow
-    Write-Host "  cd path\to\claude-code-win-v2" -ForegroundColor White
+    Write-Host "  cd path\to\wclaude" -ForegroundColor White
     Write-Host "  npm link" -ForegroundColor White
     Write-Host ""
     Read-Host "Press Enter to exit"
@@ -181,7 +164,7 @@ Write-Host "Environment configured:" -ForegroundColor Green
 Write-Host "  - MSYS path conversion: disabled" -ForegroundColor Gray
 Write-Host "  - Node.js heap: 32GB" -ForegroundColor Gray
 Write-Host "  - Git path: $(if (Test-Path $gitPath) { 'Program Files' } else { 'default' })" -ForegroundColor Gray
-Write-Host "  - MCP modules: $mcpModulesDir" -ForegroundColor Gray
+Write-Host "  - MCP modules: handled by wclaude" -ForegroundColor Gray
 Write-Host ""
 
 $continueRunning = $true
@@ -191,8 +174,8 @@ while ($continueRunning) {
     Write-Host ""
 
     try {
-        # Run claude-code-win-v2
-        & claude-code-win-v2 @args
+        # Run wclaude
+        & wclaude @args
         $exitCode = $LASTEXITCODE
     }
     catch {
