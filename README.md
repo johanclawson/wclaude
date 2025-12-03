@@ -6,6 +6,8 @@
 A production-ready Windows wrapper for [Claude Code v2.0.57](https://docs.anthropic.com/en/docs/claude-code) that auto-approves tool calls much faster than shell-based hooks. Instead of prompting for each action, it uses a configurable [`blocklist.js`](blocklist.js) that by default only blocks commands causing Windows-specific crashes and timeouts (see [Cygpath errors](#cygpath-errors) for an example).
 
 > ⚠️ **Important:** This is similar to running Claude Code with `--dangerously-skip-permissions`. **You are responsible for reviewing Claude's actions.** We take no responsibility for outcomes when running Claude Code this way.
+>
+> **Note:** Do not use `--dangerously-skip-permissions` with this wrapper. That flag bypasses Claude Code's permission system entirely, which means our auto-approve hooks and blocklist won't see requests at all. The wrapper already handles permissions just as fast and safer.
 
 ## Quick Start
 
