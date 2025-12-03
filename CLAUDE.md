@@ -312,6 +312,23 @@ const heapSizeMB = Math.min(Math.floor(totalMemoryMB * 0.75), 32768);
 - Only applied if user hasn't already set `--max-old-space-size`
 - Prevents OOM errors on systems with limited RAM while still allowing large projects
 
+### MCP Module Junction
+
+MCP (Model Context Protocol) servers expect Claude Code modules at `~/.mcp-modules/node_modules/@anthropic-ai/claude-code`. However, npm installs global packages to `%APPDATA%\npm\node_modules`.
+
+The wrapper creates a Windows directory junction to bridge this gap:
+
+```
+~/.mcp-modules/node_modules/@anthropic-ai/claude-code  →  %APPDATA%/npm/node_modules/@anthropic-ai/claude-code
+```
+
+**Safety:**
+- Never deletes existing files/directories
+- Skips if path already exists (even if not a junction)
+- Non-fatal: MCP still works if junction creation fails
+
+**Debug:** Use `--windebug` to see junction status in `~/.claude/debug.log`
+
 ## Key Files
 
 | File | Purpose |

@@ -346,6 +346,7 @@ let networkRetryCount = 0;
     // Prevent MSYS/Git Bash path conversion issues
     process.env.MSYS_NO_PATHCONV = '1';
     process.env.MSYS2_ARG_CONV_EXCL = '*';
+    process.env.MSYS_PATH_CONVERT_DISABLE = '1';
 
     // Allocate heap based on system memory (75% of RAM, capped at 32GB)
     // Only add if not already set (allow user override)
@@ -361,6 +362,7 @@ let networkRetryCount = 0;
 
     logger.debug('Environment configured:', {
       MSYS_NO_PATHCONV: process.env.MSYS_NO_PATHCONV,
+      MSYS_PATH_CONVERT_DISABLE: process.env.MSYS_PATH_CONVERT_DISABLE,
       NODE_OPTIONS: heapSizeGB + ' heap'
     });
   }
@@ -428,22 +430,63 @@ let networkRetryCount = 0;
   }
 
   /**
-   * Setup MCP modules directory
+   * Setup MCP modules directory junction
+   * Creates a junction from ~/.mcp-modules/node_modules/@anthropic-ai/claude-code
+   * to the npm global installation, allowing MCP servers to find Claude Code modules.
    */
   function setupMcpModules() {
-    const mcpDir = path.join(os.homedir(), '.claude', 'mcp_modules');
-
-    if (!fs.existsSync(mcpDir)) {
-      try {
-        fs.mkdirSync(mcpDir, { recursive: true });
-      } catch (e) {
-        // Non-fatal - just warn
-        originalConsole.warn('[claude-code-win-v2] Could not create MCP modules directory:', e.message);
-      }
+    let npmGlobalRoot;
+    try {
+      npmGlobalRoot = execSync('npm root -g', { encoding: 'utf8', timeout: 10000 }).trim();
+    } catch (e) {
+      logger.debug('MCP junction skipped: could not get npm root');
+      return;
     }
 
-    process.env.MCP_MODULES_PATH = mcpDir;
-    logger.debug('MCP modules directory:', mcpDir);
+    // Target: npm global @anthropic-ai/claude-code
+    const target = path.join(npmGlobalRoot, '@anthropic-ai', 'claude-code');
+
+    if (!fs.existsSync(target)) {
+      logger.debug('MCP junction skipped: claude-code not found at', target);
+      return;
+    }
+
+    // Link location: ~/.mcp-modules/node_modules/@anthropic-ai/claude-code
+    const mcpBase = path.join(os.homedir(), '.mcp-modules', 'node_modules', '@anthropic-ai');
+    const linkPath = path.join(mcpBase, 'claude-code');
+
+    // Skip if anything already exists at link path
+    // NEVER delete user data - if something exists, leave it alone
+    if (fs.existsSync(linkPath)) {
+      try {
+        const stat = fs.lstatSync(linkPath);
+        if (stat.isSymbolicLink()) {
+          logger.debug('MCP junction already exists:', linkPath);
+        } else {
+          logger.debug('MCP junction skipped: path exists and is not a junction:', linkPath);
+        }
+      } catch (e) {
+        logger.debug('MCP junction skipped: could not stat path:', linkPath);
+      }
+      return;
+    }
+
+    // Create parent directories
+    try {
+      fs.mkdirSync(mcpBase, { recursive: true });
+    } catch (e) {
+      logger.debug('MCP junction skipped: could not create parent directories:', e.message);
+      return;
+    }
+
+    // Create junction (Windows directory link)
+    try {
+      fs.symlinkSync(target, linkPath, 'junction');
+      logger.debug('MCP junction created:', linkPath, '->', target);
+    } catch (e) {
+      // Non-fatal - MCP will still work, just won't find modules at expected path
+      logger.debug('MCP junction skipped: could not create junction:', e.message);
+    }
   }
 
   /**

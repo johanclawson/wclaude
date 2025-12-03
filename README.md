@@ -43,7 +43,7 @@ That's it! All features are built-in - no separate launcher needed.
 | Git Bash Integration | Enables Unix commands (grep, find, etc.) | [→](#git-bash-not-found-warning) |
 | WSL Detection | Auto-redirects `\\wsl$\...` paths | [→](#setup-functions-run-on-startup) |
 | Git PATH Fix | Prefers Program Files Git over Scoop | [→](#git-bash-not-found-warning) |
-| MCP Module Setup | Creates `~/.claude/mcp_modules` | [→](#setup-functions-run-on-startup) |
+| MCP Module Junction | Links `~/.mcp-modules` to npm global | [→](#mcp-module-junction) |
 
 ## Why This Wrapper?
 
@@ -146,10 +146,10 @@ Add to `~/.claude/settings.json`:
 
 | Function | Purpose |
 |----------|---------|
-| `setupEnvironment()` | Sets `MSYS_NO_PATHCONV`, `NODE_OPTIONS` (dynamic heap: 75% RAM, max 32GB) |
+| `setupEnvironment()` | Sets MSYS env vars (prevents path mangling), `NODE_OPTIONS` (dynamic heap: 75% RAM, max 32GB) |
 | `setupGitPath()` | Prefers Program Files Git over Scoop Git |
 | `loadApiTokensFromRegistry()` | Loads API tokens from Windows Registry |
-| `setupMcpModules()` | Creates `~/.claude/mcp_modules` directory |
+| `setupMcpModules()` | Creates junction for MCP servers (see [MCP Module Junction](#mcp-module-junction)) |
 | `handleWslPath()` | Redirects WSL paths to WSL |
 | `runWithAutoRestart()` | Auto-restarts on crash (max 3/minute) |
 
@@ -200,6 +200,23 @@ The wrapper implements auto-approve permissions entirely in JavaScript - no exte
 - Falls-open on errors to avoid blocking sessions
 
 **Note:** Any hooks previously configured in `~/.claude/settings.json` can be removed - the wrapper handles everything automatically.
+
+### MCP Module Junction
+
+MCP (Model Context Protocol) servers expect to find Claude Code modules at `~/.mcp-modules/node_modules/@anthropic-ai/claude-code`. However, npm installs global packages to `%APPDATA%\npm\node_modules`.
+
+The wrapper creates a Windows directory junction to bridge this gap:
+
+```
+~/.mcp-modules/node_modules/@anthropic-ai/claude-code  →  %APPDATA%/npm/node_modules/@anthropic-ai/claude-code
+```
+
+**Safety:**
+- Never deletes existing files or directories
+- Skips if path already exists (even if not a junction)
+- Non-fatal: MCP still works if junction creation fails
+
+**Debug:** Use `--windebug` to see junction status in `~/.claude/debug.log`
 
 ## Optional: PowerShell Launcher
 
