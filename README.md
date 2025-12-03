@@ -201,8 +201,6 @@ The wrapper implements auto-approve permissions entirely in JavaScript - no exte
 - ~400-800ms faster than PowerShell-based hooks
 - Falls-open on errors to avoid blocking sessions
 
-**Note:** Any hooks previously configured in `~/.claude/settings.json` can be removed - the wrapper handles everything automatically.
-
 ### MCP Module Junction
 
 MCP (Model Context Protocol) servers expect to find Claude Code modules at `~/.mcp-modules/node_modules/@anthropic-ai/claude-code`. However, npm installs global packages to `%APPDATA%\npm\node_modules`.
