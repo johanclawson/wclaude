@@ -5,6 +5,8 @@
 
 A production-ready Windows wrapper for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) that fixes common Windows-specific crashes and stability issues.
 
+> ⚠️ **Important:** This wrapper auto-approves most tool calls, similar to running Claude Code with `--dangerously-skip-permissions`. Only commands that would crash or time-out the session (defined in [`blocklist.js`](blocklist.js)) are blocked. **You are responsible for reviewing Claude's actions.** We take no responsibility for outcomes when running Claude Code this way.
+
 ## Quick Start
 
 ```powershell
@@ -18,23 +20,30 @@ wclaude
 
 That's it! All features are built-in - no separate launcher needed.
 
-## Features (All Built-In)
+## Features
 
-| Feature | Description |
-|---------|-------------|
-| **EPERM Crash Fix** | Prevents crashes when Claude Code terminates timed-out commands |
-| **Cygpath Fix** | Intercepts cygpath calls to prevent crashes on Git Bash/MSYS |
-| **Auto-Restart** | Automatically restarts on crash (max 3 times per minute) |
-| **Network Auto-Restart** | Waits for internet with exponential backoff (10 retries, 5s→60s) |
-| **Dynamic Heap** | Sets `NODE_OPTIONS` to 75% of system RAM (max 32GB) |
-| **MSYS Fix** | Prevents Git Bash path conversion issues |
-| **API Token Loading** | Loads tokens from Windows Registry |
-| **Git Bash Integration** | Enables Unix commands (grep, find, awk, sed) |
-| **WSL Detection** | Auto-redirects `\\wsl$\...` paths to WSL |
-| **MCP Module Setup** | Creates `~/.claude/mcp_modules` directory |
-| **Git PATH Fix** | Prefers Program Files Git over Scoop Git |
-| **Ctrl+Break Unfreeze** | Kill stuck child processes without closing the session |
-| **Hook Interception** | Auto-approves tools + toast notifications (no PowerShell latency) |
+### Major Features
+
+| Feature | What it does |
+|---------|--------------|
+| **[Ctrl+Break Unfreeze](#ctrlbreak-unfreeze-feature)** | Kill stuck child processes without closing your session |
+| **[Hook Interception](#auto-approve-permissions)** | Auto-approve tools with configurable blocklist ([`blocklist.js`](blocklist.js)) |
+| **[Toast Notifications](#auto-approve-permissions)** | Windows alerts when planning is done or user action is needed |
+
+### Minor Features
+
+| Feature | Description | Details |
+|---------|-------------|---------|
+| EPERM Crash Fix | Prevents crashes on command termination | [→](#nodejs-hooks) |
+| Cygpath Fix | Intercepts cygpath for Git Bash/MSYS | [→](#cygpath-errors) |
+| Auto-Restart | Restarts on crash (max 3/min) | [→](#auto-restart) |
+| Network Auto-Restart | Waits for internet with backoff | [→](#auto-restart) |
+| Dynamic Heap | 75% of RAM, max 32GB | [→](#setup-functions-run-on-startup) |
+| API Token Loading | Loads from Windows Registry | [→](#api-tokens) |
+| Git Bash Integration | Enables Unix commands (grep, find, etc.) | [→](#git-bash-not-found-warning) |
+| WSL Detection | Auto-redirects `\\wsl$\...` paths | [→](#setup-functions-run-on-startup) |
+| Git PATH Fix | Prefers Program Files Git over Scoop | [→](#git-bash-not-found-warning) |
+| MCP Module Setup | Creates `~/.claude/mcp_modules` | [→](#setup-functions-run-on-startup) |
 
 ## Why This Wrapper?
 
