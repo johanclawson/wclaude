@@ -342,5 +342,4 @@ The wrapper creates a Windows directory junction to bridge this gap:
 | `SECURITY_AUDIT.md` | Security analysis |
 | `CREDITS.md` | Attribution |
 | `assets/` | Static assets (claude-icon.png for notifications) |
-| `launchers/` | Optional PowerShell launchers |
 | `registry/` | Windows context menu integration |

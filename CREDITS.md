@@ -19,13 +19,13 @@ This project's `runner.js` is derived from somersby10ml's original work.
 
 **License:** MIT
 
-**Contribution:** Comprehensive Windows launcher setup including:
-- PowerShell launcher scripts with environment configuration
-- BAT wrappers for easy execution
+**Contribution:** Comprehensive Windows setup concepts including:
+- Environment configuration (MSYS variables, heap sizing)
 - Registry files for context menu integration
+- API token loading from Windows Registry
 - Documentation on Windows-specific fixes
 
-The launcher scripts in this project are inspired by aaronvstory's work.
+The environment setup approach in this project is inspired by aaronvstory's work.
 
 ### Anthropic Claude Code Community
 

@@ -218,15 +218,7 @@ The wrapper creates a Windows directory junction to bridge this gap:
 
 **Debug:** Use `--windebug` to see junction status in `~/.claude/debug.log`
 
-## Optional: PowerShell Launcher
-
-For users who want additional features like interactive restart prompts:
-
-```powershell
-.\launchers\claude-code-launcher.bat
-```
-
-### Context Menu Integration
+## Context Menu Integration
 
 Add "Open with Claude Code" to folder right-click menu:
 
@@ -382,7 +374,7 @@ The project is split across two main files:
 This project combines work from:
 
 - **[somersby10ml/win-claude-code](https://github.com/somersby10ml/win-claude-code)** - Original Node.js hooks (MIT)
-- **[aaronvstory/claude-code-windows-setup](https://github.com/aaronvstory/claude-code-windows-setup)** - Launcher concepts
+- **[aaronvstory/claude-code-windows-setup](https://github.com/aaronvstory/claude-code-windows-setup)** - Environment setup concepts
 - **[GitHub Issue #9745](https://github.com/anthropics/claude-code/issues/9745)** - EPERM fix approach
 
 See [CREDITS.md](CREDITS.md) for full attribution.

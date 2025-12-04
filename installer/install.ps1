@@ -136,29 +136,14 @@ if (-not $SkipContextMenu) {
         $regFile = Join-Path $repoRoot "registry\install-context-menu.reg"
 
         if (Test-Path $regFile) {
-            # Update the reg file with actual paths
-            $content = Get-Content $regFile -Raw
-            $launcherPath = Join-Path $repoRoot "launchers\claude-code-launcher.ps1"
-            $escapedPath = $launcherPath.Replace('\', '\\')
-
-            # Replace placeholder paths
-            $content = $content -replace 'C:\\\\Users\\\\%USERNAME%\\\\repos\\\\wclaude\\\\launchers\\\\claude-code-launcher.ps1', $escapedPath
-
-            # Create temp reg file with actual paths
-            $tempReg = Join-Path $env:TEMP "claude-code-context-menu.reg"
-            $content | Set-Content $tempReg -Encoding Unicode
-
             try {
-                # Import registry file
-                Start-Process "regedit.exe" -ArgumentList "/s `"$tempReg`"" -Wait -Verb RunAs
+                # Import registry file directly (no path substitution needed - uses wclaude command)
+                Start-Process "regedit.exe" -ArgumentList "/s `"$regFile`"" -Wait -Verb RunAs
                 Write-Host "  Context menu installed successfully" -ForegroundColor Green
             }
             catch {
                 Write-Host "  WARNING: Context menu installation requires administrator privileges" -ForegroundColor Yellow
                 Write-Host "  You can manually run: $regFile" -ForegroundColor Gray
-            }
-            finally {
-                Remove-Item $tempReg -ErrorAction SilentlyContinue
             }
         }
         else {
@@ -216,10 +201,6 @@ Write-Host ""
 Write-Host "You can now run Claude Code using:" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  wclaude" -ForegroundColor White
-Write-Host ""
-Write-Host "Or use the launcher script for extra features:" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "  $repoRoot\launchers\claude-code-launcher.bat" -ForegroundColor White
 Write-Host ""
 
 if (-not $gitVersion) {

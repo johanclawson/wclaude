@@ -3,16 +3,12 @@ Windows Registry Editor Version 5.00
 ; Claude Code Windows - Right-click Context Menu Integration
 ;
 ; INSTRUCTIONS:
-; 1. IMPORTANT: Edit ALL paths below to match YOUR installation location
-;    - If you cloned to C:\Projects\wclaude, change all paths accordingly
-;    - The %USERNAME% variable will be replaced with your Windows username
-;
+; 1. Install wclaude globally: npm install -g wclaude
 ; 2. Double-click this file and confirm the registry modification
 ; 3. Right-click any folder to see "Open with Claude Code" option
 ;
-; Default paths assume you cloned to: C:\Users\%USERNAME%\repos\wclaude\
-; If you installed via npm (npm install -g wclaude), use the launcher directly:
-;    wclaude "folder-path"
+; Note: This uses cmd /k to keep the window open and show any errors.
+; The command changes to the selected directory, then runs wclaude.
 
 ; ============================================
 ; Folder Context Menu (right-click on folder)
@@ -23,7 +19,7 @@ Windows Registry Editor Version 5.00
 "Icon"="%SystemRoot%\\System32\\imageres.dll,190"
 
 [HKEY_CLASSES_ROOT\Directory\shell\ClaudeCode\command]
-@="powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\Users\\%USERNAME%\\repos\\wclaude\\launchers\\claude-code-launcher.ps1\" \"%V\""
+@="cmd /k \"cd /d \"%V\" && wclaude\""
 
 ; Continue session option
 [HKEY_CLASSES_ROOT\Directory\shell\ClaudeCodeContinue]
@@ -31,7 +27,7 @@ Windows Registry Editor Version 5.00
 "Icon"="%SystemRoot%\\System32\\imageres.dll,191"
 
 [HKEY_CLASSES_ROOT\Directory\shell\ClaudeCodeContinue\command]
-@="powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\Users\\%USERNAME%\\repos\\wclaude\\launchers\\claude-code-launcher.ps1\" \"%V\" --continue"
+@="cmd /k \"cd /d \"%V\" && wclaude --continue\""
 
 ; ============================================
 ; Background Context Menu (right-click in empty space)
@@ -42,11 +38,11 @@ Windows Registry Editor Version 5.00
 "Icon"="%SystemRoot%\\System32\\imageres.dll,190"
 
 [HKEY_CLASSES_ROOT\Directory\Background\shell\ClaudeCode\command]
-@="powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\Users\\%USERNAME%\\repos\\wclaude\\launchers\\claude-code-launcher.ps1\" \"%V\""
+@="cmd /k \"cd /d \"%V\" && wclaude\""
 
 [HKEY_CLASSES_ROOT\Directory\Background\shell\ClaudeCodeContinue]
 @="Continue with Claude Code"
 "Icon"="%SystemRoot%\\System32\\imageres.dll,191"
 
 [HKEY_CLASSES_ROOT\Directory\Background\shell\ClaudeCodeContinue\command]
-@="powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\Users\\%USERNAME%\\repos\\wclaude\\launchers\\claude-code-launcher.ps1\" \"%V\" --continue"
+@="cmd /k \"cd /d \"%V\" && wclaude --continue\""
