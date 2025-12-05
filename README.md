@@ -30,7 +30,7 @@ That's it! All features are built-in - no separate launcher needed.
 |---------|--------------|
 | **[Ctrl+Break Unfreeze](#ctrlbreak-unfreeze-feature)** | Kill stuck child processes without closing your session |
 | **[Hook Interception](#auto-approve-permissions)** | Auto-approve tools with configurable blocklist ([`blocklist.js`](blocklist.js)) |
-| **[Toast Notifications](#auto-approve-permissions)** | Windows alerts when planning is done or user action is needed |
+| **[Toast Notifications](#auto-approve-permissions)** | Persistent Windows alerts with click-to-focus (requires PowerShell 7.1+) |
 
 ### Minor Features
 
@@ -261,6 +261,28 @@ To debug cygpath interceptions, run with `--windebug` and check `~/.claude/debug
 - Node.js 18+
 - npm
 - Git for Windows (optional but recommended)
+- PowerShell 7.1+ (optional, for toast notifications with click-to-focus)
+
+### Installing PowerShell 7
+
+Toast notifications with click-to-focus require PowerShell 7.1 or later. Without it, wclaude still works but won't show notifications.
+
+```powershell
+# Option 1: winget (recommended)
+winget install Microsoft.PowerShell
+
+# Option 2: Microsoft Store
+# Search for "PowerShell" in the Microsoft Store
+
+# Option 3: Direct download
+# https://github.com/PowerShell/PowerShell/releases
+```
+
+After installation, verify with:
+```powershell
+pwsh --version
+# Should show: PowerShell 7.x.x
+```
 
 ## Contributing
 
