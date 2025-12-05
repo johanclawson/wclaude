@@ -43,21 +43,21 @@ if ($WtHandle -eq 0 -and $args.Count -gt 0) {
     }
 }
 
-# Logging helper
-$logFile = Join-Path $env:USERPROFILE ".claude\focus-window.log"
-function Log($msg) {
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff"
-    "$timestamp - $msg" | Out-File -FilePath $logFile -Append -Encoding utf8
-}
+# Logging helper - uncomment Log calls below to enable debug logging
+# $logFile = Join-Path $env:USERPROFILE ".claude\focus-window.log"
+# function Log($msg) {
+#     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff"
+#     "$timestamp - $msg" | Out-File -FilePath $logFile -Append -Encoding utf8
+# }
 
-Log "=== focus-window.ps1 started ==="
-Log "UrlOrHandle param: '$UrlOrHandle'"
-Log "args[0]: '$($args[0])'"
-Log "Parsed WtHandle: $WtHandle"
+# Log "=== focus-window.ps1 started ==="
+# Log "UrlOrHandle param: '$UrlOrHandle'"
+# Log "args[0]: '$($args[0])'"
+# Log "Parsed WtHandle: $WtHandle"
 
 # Exit if no valid handle
 if ($WtHandle -eq 0) {
-    Log "ERROR: No valid handle, exiting"
+    # Log "ERROR: No valid handle, exiting"
     exit 0
 }
 
@@ -101,66 +101,66 @@ public class WinApi {
 
 # Convert to IntPtr
 $hwnd = [IntPtr]$WtHandle
-Log "Converted to IntPtr: $hwnd"
+# Log "Converted to IntPtr: $hwnd"
 
 # Verify the window handle is valid
 $isValidWindow = [WinApi]::IsWindow($hwnd)
-Log "IsWindow result: $isValidWindow"
+# Log "IsWindow result: $isValidWindow"
 if (-not $isValidWindow) {
-    Log "ERROR: Invalid window handle, exiting"
+    # Log "ERROR: Invalid window handle, exiting"
     exit 0
 }
 
 # Check if minimized
 $isMinimized = [WinApi]::IsIconic($hwnd)
-Log "IsIconic (minimized): $isMinimized"
+# Log "IsIconic (minimized): $isMinimized"
 
 # Get thread IDs for AttachThreadInput
 $fgWindow = [WinApi]::GetForegroundWindow()
-Log "Foreground window: $fgWindow"
+# Log "Foreground window: $fgWindow"
 $fgThreadId = [uint32]0
 [WinApi]::GetWindowThreadProcessId($fgWindow, [ref]$fgThreadId) | Out-Null
 $currentThreadId = [WinApi]::GetCurrentThreadId()
-Log "Foreground thread ID: $fgThreadId"
-Log "Current thread ID: $currentThreadId"
+# Log "Foreground thread ID: $fgThreadId"
+# Log "Current thread ID: $currentThreadId"
 
 # Attach our thread to the foreground thread to bypass focus-stealing prevention
 $attached = [WinApi]::AttachThreadInput($currentThreadId, $fgThreadId, $true)
-Log "AttachThreadInput result: $attached"
+# Log "AttachThreadInput result: $attached"
 
 if ($attached) {
     try {
         # Restore if minimized
         if ([WinApi]::IsIconic($hwnd)) {
             $restoreResult = [WinApi]::ShowWindow($hwnd, [WinApi]::SW_RESTORE)
-            Log "ShowWindow(SW_RESTORE) result: $restoreResult"
+            # Log "ShowWindow(SW_RESTORE) result: $restoreResult"
         }
 
         # Now we have permission - focus the window
         $bringResult = [WinApi]::BringWindowToTop($hwnd)
-        Log "BringWindowToTop result: $bringResult"
+        # Log "BringWindowToTop result: $bringResult"
         $fgResult = [WinApi]::SetForegroundWindow($hwnd)
-        Log "SetForegroundWindow result: $fgResult"
+        # Log "SetForegroundWindow result: $fgResult"
 
         # Give message queue time to process
         Start-Sleep -Milliseconds 50
     } finally {
         # Always detach
         $detachResult = [WinApi]::AttachThreadInput($currentThreadId, $fgThreadId, $false)
-        Log "Detach result: $detachResult"
+        # Log "Detach result: $detachResult"
     }
 } else {
-    Log "AttachThreadInput failed, trying fallback..."
+    # Log "AttachThreadInput failed, trying fallback..."
     # Fallback: try without AttachThreadInput (may not work but worth trying)
     if ([WinApi]::IsIconic($hwnd)) {
         $restoreResult = [WinApi]::ShowWindow($hwnd, [WinApi]::SW_RESTORE)
-        Log "Fallback ShowWindow(SW_RESTORE) result: $restoreResult"
+        # Log "Fallback ShowWindow(SW_RESTORE) result: $restoreResult"
     }
     $bringResult = [WinApi]::BringWindowToTop($hwnd)
-    Log "Fallback BringWindowToTop result: $bringResult"
+    # Log "Fallback BringWindowToTop result: $bringResult"
     $fgResult = [WinApi]::SetForegroundWindow($hwnd)
-    Log "Fallback SetForegroundWindow result: $fgResult"
+    # Log "Fallback SetForegroundWindow result: $fgResult"
 }
 
-Log "=== focus-window.ps1 finished ==="
+# Log "=== focus-window.ps1 finished ==="
 exit 0

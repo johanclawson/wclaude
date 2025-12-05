@@ -42,7 +42,7 @@ try {
     }
 
     # Set command to run pwsh with our focus script (hidden window)
-    # The %1 receives the full URI (wclaude://focus/<pid>)
+    # The %1 receives the full URI (wclaude://focus/<handle>)
     # Use -WindowStyle Hidden to prevent PowerShell window from appearing
     $command = "pwsh -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$focusScript`" -UrlOrHandle `"%1`""
     Set-ItemProperty -Path $commandKey -Name "(Default)" -Value $command
