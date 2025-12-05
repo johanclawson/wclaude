@@ -31,7 +31,7 @@ import dns from 'dns';
 import { promisify } from 'util';
 import { EventEmitter } from 'events';
 import { fileURLToPath } from 'url';
-import notifier from 'node-notifier';
+import crypto from 'crypto';
 import { validateCommand } from './blocklist.js';
 
 // ES modules equivalent of __dirname
@@ -40,6 +40,15 @@ const __dirname = path.dirname(__filename);
 
 // Path to Claude icon for toast notifications
 const CLAUDE_ICON_PATH = path.join(__dirname, 'assets', 'claude-icon.png');
+
+// Path to focus-window.ps1 script
+const FOCUS_WINDOW_SCRIPT = path.join(__dirname, 'scripts', 'focus-window.ps1');
+
+// Toast notification state (set during PowerShell/BurntToast check)
+let toastEnabled = false;
+let wclaudeTabTitle = '';
+let Toast = null;  // Loaded dynamically by loadPowerToast()
+let parentWtHandle = 0;  // Windows Terminal window handle (found at startup)
 
 const dnsLookup = promisify(dns.lookup);
 
@@ -194,7 +203,7 @@ export function handlePermissionRequest(jsonInput) {
       // Show toast notification so user knows action is required
       const projectFolder = request.cwd ? path.basename(request.cwd) : 'Unknown';
 
-      // Format: "ProjectName - User Input Required" as title, tool name as message
+      // Format: "ProjectName - Input Required" as title, tool name as message
       const title = `${projectFolder} - Input Required`;
       const message = toolName === 'AskUserQuestion'
         ? 'Claude is asking a question'
@@ -203,13 +212,7 @@ export function handlePermissionRequest(jsonInput) {
           : `${toolName} needs approval`;
 
       logger.debug('Tool excluded, showing notification:', toolName, 'in', projectFolder);
-      notifier.notify({
-        title,
-        message,
-        icon: CLAUDE_ICON_PATH,
-        sound: true,
-        appID: 'Claude Code'  // App name shown in notification
-      });
+      showNotification(title, message);
 
       // Return empty string - Claude Code will show normal prompt (passthrough)
       return '';
@@ -253,13 +256,7 @@ export function handleStopHook(jsonInput) {
   }
 
   // Show notification (non-blocking)
-  notifier.notify({
-    title: `${projectFolder} - Task Complete`,
-    message: 'Claude has finished the task',
-    icon: CLAUDE_ICON_PATH,
-    sound: true,
-    appID: 'Claude Code'  // App name shown in notification
-  });
+  showNotification(`${projectFolder} - Task Complete`, 'Claude has finished the task');
 
   return JSON.stringify({});
 }
@@ -321,6 +318,247 @@ function setupSignalHandlers() {
   logger.debug('Signal handlers installed (SIGINT, SIGTERM, SIGHUP, SIGBREAK)');
 }
 
+/**
+ * Check if PowerShell 7.1+ is available for toast notifications.
+ * Toast notifications require pwsh (PowerShell Core) 7.1+ for click event support.
+ * If not available, toasts are disabled gracefully.
+ */
+function checkPowerShellVersion() {
+  try {
+    const version = execSync('pwsh -NoProfile -Command "$PSVersionTable.PSVersion.ToString()"', {
+      encoding: 'utf8',
+      timeout: 5000,
+      stdio: ['pipe', 'pipe', 'ignore']
+    }).trim();
+
+    const parts = version.split('.');
+    const major = parseInt(parts[0], 10) || 0;
+    const minor = parseInt(parts[1], 10) || 0;
+
+    if (major > 7 || (major === 7 && minor >= 1)) {
+      toastEnabled = true;
+      logger.debug('PowerShell version:', version, '- toast notifications enabled');
+    } else {
+      toastEnabled = false;
+      originalConsole.log(`[wclaude] Toast notifications disabled: PowerShell 7.1+ required (found ${version})`);
+      logger.debug('PowerShell version:', version, '- too old, toasts disabled');
+    }
+  } catch (e) {
+    toastEnabled = false;
+    originalConsole.log('[wclaude] Toast notifications disabled: pwsh not found');
+    originalConsole.log('[wclaude] Install PowerShell 7: winget install Microsoft.PowerShell');
+    logger.debug('PowerShell check failed:', e.message, '- toasts disabled');
+  }
+}
+
+/**
+ * Find the Windows Terminal window handle by getting the foreground window at startup.
+ * When user types 'wclaude', their terminal window naturally has focus.
+ * Each WT window has a unique HWND even though they share a single process.
+ */
+function findTerminalWindowHandle() {
+  if (!toastEnabled) return;
+
+  try {
+    // Get the foreground window and verify it's a Windows Terminal window
+    // Windows Terminal uses class name: CASCADIA_HOSTING_WINDOW_CLASS
+    const script = `
+Add-Type @'
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+public class WinApi {
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")]
+    public static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
+}
+'@
+$hwnd = [WinApi]::GetForegroundWindow()
+$className = New-Object System.Text.StringBuilder 256
+[WinApi]::GetClassName($hwnd, $className, 256) | Out-Null
+if ($className.ToString() -eq 'CASCADIA_HOSTING_WINDOW_CLASS') {
+    $hwnd.ToInt64()
+} else {
+    0
+}
+`;
+    const encoded = Buffer.from(script, 'utf16le').toString('base64');
+    const result = execSync(`pwsh -NoProfile -EncodedCommand ${encoded}`, {
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe']
+    }).trim();
+
+    if (result && /^\d+$/.test(result)) {
+      parentWtHandle = parseInt(result, 10);
+      logger.debug('Found Windows Terminal window handle:', parentWtHandle);
+    }
+  } catch (e) {
+    logger.debug('Could not find Windows Terminal window:', e.message);
+  }
+}
+
+/**
+ * Set a unique tab title for this wclaude session.
+ * This allows the focus-window script to find and select the correct tab
+ * when the user clicks on a toast notification.
+ */
+function setupTabTitle() {
+  // Generate unique session ID
+  const sessionId = crypto.randomBytes(4).toString('hex');
+
+  // Get project name from current working directory
+  let projectName = 'wclaude';
+  try {
+    projectName = path.basename(process.cwd());
+  } catch (e) {
+    // Ignore - use default
+  }
+
+  // Create unique tab title
+  wclaudeTabTitle = `wclaude - ${projectName} [${sessionId}]`;
+
+  // Set tab title using ANSI escape sequence (OSC 0)
+  // This works in Windows Terminal, ConEmu, and most modern terminals
+  process.stdout.write(`\x1b]0;${wclaudeTabTitle}\x07`);
+
+  logger.debug('Tab title set:', wclaudeTabTitle);
+}
+
+/**
+ * Load powertoast module dynamically.
+ * Only called if PowerShell 7.1+ is available.
+ */
+async function loadPowerToast() {
+  if (!toastEnabled) return;
+
+  try {
+    const powertoast = await import('powertoast');
+    Toast = powertoast.Toast;
+    logger.debug('powertoast module loaded successfully');
+  } catch (e) {
+    toastEnabled = false;
+    logger.debug('Failed to load powertoast:', e.message, '- toasts disabled');
+  }
+}
+
+/**
+ * Register the wclaude:// protocol handler for toast notification clicks.
+ * Only registers once - checks registry first to avoid unnecessary writes.
+ * Runs silently - failures don't affect wclaude operation.
+ */
+function registerProtocolHandler() {
+  if (!toastEnabled) return;
+
+  try {
+    // Check if already registered by looking for the registry key
+    const checkResult = execSync(
+      'reg query "HKCU\\Software\\Classes\\wclaude\\shell\\open\\command" /ve 2>nul',
+      { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }
+    );
+
+    // If we get here, the key exists - check if it has the correct parameter name
+    // We check for -UrlOrHandle to force re-registration when parameter name changes
+    if (checkResult.includes('-UrlOrHandle')) {
+      logger.debug('wclaude:// protocol already registered');
+      return;
+    }
+  } catch {
+    // Key doesn't exist - need to register
+  }
+
+  try {
+    // Register the protocol handler using PowerShell
+    const registerScript = path.join(__dirname, 'scripts', 'register-protocol.ps1');
+    execSync(
+      `pwsh -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "${registerScript}"`,
+      { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }
+    );
+    logger.debug('wclaude:// protocol registered successfully');
+  } catch (e) {
+    // Non-fatal - toasts will still show, just won't focus on click
+    logger.debug('Failed to register wclaude:// protocol:', e.message);
+  }
+}
+
+/**
+ * Show a Windows toast notification with click-to-focus support.
+ * Uses powertoast for reliable click callbacks (requires pwsh 7.1+).
+ * Falls back to no notification if PowerShell is not available.
+ *
+ * @param {string} title - Notification title
+ * @param {string} message - Notification body
+ */
+function showNotification(title, message) {
+  if (!toastEnabled || !Toast) {
+    logger.debug('Toast skipped (disabled):', title);
+    return;
+  }
+
+  try {
+    // Build wclaude:// protocol URL with window handle for precise identification
+    // parentWtHandle was captured at startup from the foreground window
+    const focusUrl = `wclaude://focus/${parentWtHandle}`;
+
+    const toast = new Toast({
+      title,
+      message,
+      icon: CLAUDE_ICON_PATH,
+      aumid: 'Anthropic.ClaudeCode',  // Required for notifications to show
+      scenario: 'reminder',  // Stays on screen until dismissed (requires button)
+      // Click toast body to focus terminal
+      activation: focusUrl,
+      // Button required for 'reminder' scenario - same action as clicking body
+      button: [{ text: 'Open', activation: focusUrl }]
+    });
+
+    toast.on('activated', () => {
+      logger.debug('Toast activated, focusing terminal');
+      focusTerminal();
+    });
+
+    toast.on('dismissed', (reason) => {
+      logger.debug('Toast dismissed:', reason);
+    });
+
+    // keepalive: time in seconds to wait for click events (PowerShell stays running)
+    // 0 = no waiting, toast fires and forgets
+    // We use 30 seconds - enough time for user to notice and click
+    toast.show({ keepalive: 30 }).catch(e => {
+      logger.debug('Toast show error:', e.message);
+    });
+
+    logger.debug('Toast shown:', title);
+  } catch (e) {
+    logger.debug('Toast error:', e.message);
+  }
+}
+
+/**
+ * Focus the Windows Terminal window and select the correct tab.
+ * Runs the focus-window.ps1 script asynchronously.
+ */
+function focusTerminal() {
+  if (!toastEnabled) return;
+
+  try {
+    spawn('pwsh', [
+      '-NoProfile',
+      '-ExecutionPolicy', 'Bypass',
+      '-File', FOCUS_WINDOW_SCRIPT,
+      '-TabTitle', wclaudeTabTitle,
+      '-FallbackPid', String(process.ppid || 0)
+    ], {
+      detached: true,
+      stdio: 'ignore'
+    }).unref();
+
+    logger.debug('Focus script launched');
+  } catch (e) {
+    logger.debug('Focus script error:', e.message);
+  }
+}
+
 // Counters (configuration is in exported CONFIG object)
 let crashRestartCount = 0;
 let lastCrashTime = 0;
@@ -335,6 +573,11 @@ let networkRetryCount = 0;
   setupGitPath();
   loadApiTokensFromRegistry();
   setupMcpModules();
+  checkPowerShellVersion();  // Check if pwsh 7.1+ is available for toasts
+  findTerminalWindowHandle();  // Find WT window handle for click-to-focus
+  setupTabTitle();  // Set unique tab title for user reference
+  await loadPowerToast();  // Load powertoast module if pwsh available
+  registerProtocolHandler();  // Register wclaude:// protocol for click-to-focus
   handleWslPath(); // May exit if WSL path detected
 
   let gitBashPath = null;

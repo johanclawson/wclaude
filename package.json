@@ -10,7 +10,8 @@
   "files": [
     "runner.js",
     "blocklist.js",
-    "assets/"
+    "assets/",
+    "scripts/"
   ],
   "scripts": {
     "start": "node runner.js",
@@ -51,6 +52,6 @@
     "jest": "^29.7.0"
   },
   "dependencies": {
-    "node-notifier": "^10.0.1"
+    "powertoast": "^3.0.0"
   }
 }
