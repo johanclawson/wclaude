@@ -41,9 +41,6 @@ const __dirname = path.dirname(__filename);
 // Path to Claude icon for toast notifications
 const CLAUDE_ICON_PATH = path.join(__dirname, 'assets', 'claude-icon.png');
 
-// Path to focus-window.ps1 script
-const FOCUS_WINDOW_SCRIPT = path.join(__dirname, 'scripts', 'focus-window.ps1');
-
 // Toast notification state (set during PowerShell/BurntToast check)
 let toastEnabled = false;
 let wclaudeTabTitle = '';
@@ -512,11 +509,6 @@ function showNotification(title, message) {
       button: [{ text: 'Open', activation: focusUrl }]
     });
 
-    toast.on('activated', () => {
-      logger.debug('Toast activated, focusing terminal');
-      focusTerminal();
-    });
-
     toast.on('dismissed', (reason) => {
       logger.debug('Toast dismissed:', reason);
     });
@@ -531,31 +523,6 @@ function showNotification(title, message) {
     logger.debug('Toast shown:', title);
   } catch (e) {
     logger.debug('Toast error:', e.message);
-  }
-}
-
-/**
- * Focus the Windows Terminal window and select the correct tab.
- * Runs the focus-window.ps1 script asynchronously.
- */
-function focusTerminal() {
-  if (!toastEnabled) return;
-
-  try {
-    spawn('pwsh', [
-      '-NoProfile',
-      '-ExecutionPolicy', 'Bypass',
-      '-File', FOCUS_WINDOW_SCRIPT,
-      '-TabTitle', wclaudeTabTitle,
-      '-FallbackPid', String(process.ppid || 0)
-    ], {
-      detached: true,
-      stdio: 'ignore'
-    }).unref();
-
-    logger.debug('Focus script launched');
-  } catch (e) {
-    logger.debug('Focus script error:', e.message);
   }
 }
 
