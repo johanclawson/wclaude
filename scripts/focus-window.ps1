@@ -24,23 +24,18 @@ param(
     [string]$UrlOrHandle = ""
 )
 
-# Parse input - could be wclaude:// URL or direct handle
-$WtHandle = 0
-
-if ($UrlOrHandle -match '^wclaude://focus/(\d+)') {
-    $WtHandle = [long]$Matches[1]
-} elseif ($UrlOrHandle -match '^\d+$') {
-    $WtHandle = [long]$UrlOrHandle
+# Determine input from parameter or positional argument
+$inputString = $UrlOrHandle
+if ([string]::IsNullOrEmpty($inputString) -and $args.Count -gt 0) {
+    $inputString = $args[0]
 }
 
-# Also check $args[0] in case URL was passed without -UrlOrHandle
-if ($WtHandle -eq 0 -and $args.Count -gt 0) {
-    $arg = $args[0]
-    if ($arg -match '^wclaude://focus/(\d+)') {
-        $WtHandle = [long]$Matches[1]
-    } elseif ($arg -match '^\d+$') {
-        $WtHandle = [long]$arg
-    }
+# Parse input - could be wclaude:// URL or direct handle
+$WtHandle = 0
+if ($inputString -match '^wclaude://focus/(\d+)') {
+    $WtHandle = [long]$Matches[1]
+} elseif ($inputString -match '^\d+$') {
+    $WtHandle = [long]$inputString
 }
 
 # Logging helper - uncomment Log calls below to enable debug logging
@@ -51,8 +46,8 @@ if ($WtHandle -eq 0 -and $args.Count -gt 0) {
 # }
 
 # Log "=== focus-window.ps1 started ==="
-# Log "UrlOrHandle param: '$UrlOrHandle'"
-# Log "args[0]: '$($args[0])'"
+# Log "UrlOrHandle param: '$UrlOrHandle', args[0]: '$($args[0])'"
+# Log "Resolved inputString: '$inputString'"
 # Log "Parsed WtHandle: $WtHandle"
 
 # Exit if no valid handle
