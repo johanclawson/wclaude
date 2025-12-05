@@ -513,10 +513,8 @@ function showNotification(title, message) {
       logger.debug('Toast dismissed:', reason);
     });
 
-    // keepalive: time in seconds to wait for click events (PowerShell stays running)
-    // 0 = no waiting, toast fires and forgets
-    // We use 30 seconds - enough time for user to notice and click
-    toast.show({ keepalive: 30 }).catch(e => {
+    // keepalive: 0 since click handling is done via wclaude:// protocol, not event listener
+    toast.show({ keepalive: 0 }).catch(e => {
       logger.debug('Toast show error:', e.message);
     });
 
